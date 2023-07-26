@@ -3,8 +3,8 @@
 #include "fileIO.h"
 #include "ranking.h"
 
-void initializeApp();
-int gameRun();
+void InitializeApp();
+int GameRun();
 void newName(char* name);
 void getFileName(char* fileName);
 void showRanking(int score, char* name);
@@ -12,10 +12,10 @@ void showRanking(int score, char* name);
 
 int main() {
     int score = 0;
-    initializeApp();
+    InitializeApp();
     char name[1024];
     newName(name);
-    score = gameRun();
+    score = GameRun();
     showRanking(score, name);
     return 0;
 }

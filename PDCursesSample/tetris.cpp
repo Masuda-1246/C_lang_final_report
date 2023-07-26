@@ -12,8 +12,10 @@
 #define SHAPE_WIDTH_MAX (4)
 #define SHAPE_HEIGHT_MAX (4)
 
-#define FPS (3)
-#define INTERVAL (1000 / FPS)
+#define X 50
+#define Y 3
+
+int hold_status = 0;
 
 enum {
     SHAPE_I,
@@ -95,6 +97,8 @@ SHAPE shapes[7]{
 };
 
 MINO mino;
+MINO nextMino;
+MINO holdMino;
 int field[FIELD_HEIGHT][FIELD_WIDTH];
 int screan[FIELD_HEIGHT][FIELD_WIDTH];
 
@@ -122,16 +126,16 @@ void DrawScrean() {
         }
     }
     for (y = 0; y < FIELD_HEIGHT; y++) {
-        mvprintw(y, 0, "□");
+        mvprintw(y + Y, 0+X, "□");
         for (x = 0; x < FIELD_WIDTH + 1; x++) {
             attron(COLOR_PAIR(screan[y][x]));
-            if (screan[y][x]) mvprintw(y, x * 2 + 2, "■");
+            if (screan[y][x]) mvprintw(y + Y, x * 2 + 2 + X, "■");
             attroff(COLOR_PAIR(screan[y][x]));
         }
-        mvprintw(y, x * 2, "□");
+        mvprintw(y+Y, x * 2 + X, "□");
     }
     for (x = 0; x < FIELD_WIDTH + 2; x++) {
-        mvprintw(y, x * 2, "□");
+        mvprintw(y + Y, x * 2 + X, "□");
     }
 }
 
@@ -150,30 +154,59 @@ int Init() {
     return next;
 }
 
-void drawField() {
+void DrawField() {
     int y = 0, x = 0;
     for (y = 0; y < FIELD_HEIGHT; y++) {
         for (x = 0; x < FIELD_WIDTH; x++) {
-            mvprintw(y, 50 + x, "%d", screan[y][x]);
+            mvprintw(y, 50 + x + X, "%d", screan[y][x]);
         }
     }
 }
 
-void drawNextMino(int next) {
+void DrawNextMino(int next) {
     int y = 0, x = 0;
-    MINO nextMino;
     nextMino.shape = shapes[next];
-    mvprintw(2, 26, "next");
+    mvprintw(2 + Y, 26 + X, "next");
     for (y = 0; y < nextMino.shape.height; y++) {
         for (x = 0; x < nextMino.shape.width; x++) {
             attron(COLOR_PAIR(nextMino.shape.type));
-            if (nextMino.shape.pattern[y][x]) mvprintw(y + 4, 26 + x * 2, "■");
+            if (nextMino.shape.pattern[y][x]) mvprintw(y + 4 + Y, 26 + x * 2 + X, "■");
             attroff(COLOR_PAIR(nextMino.shape.type));
         }
     }
 }
 
-void initializeApp() {
+void DrawHoldMino(int status) {
+    int y = 0, x = 0;
+    mvprintw(2 + Y,X-12, "hold");
+    if (status) {
+        for (y = 0; y < holdMino.shape.height; y++) {
+            for (x = 0; x < holdMino.shape.width; x++) {
+                attron(COLOR_PAIR(holdMino.shape.type));
+                if (holdMino.shape.type != 0 && holdMino.shape.pattern[y][x]) mvprintw(y + 4 + Y, x * 2 + X - 12, "■");
+                attroff(COLOR_PAIR(holdMino.shape.type));
+            }
+        }
+    }
+    
+}
+
+void HoldFlow(int* next) {
+    int y = 0, x = 0;
+    int type = mino.shape.type - 1;
+    if (hold_status == 1) {
+        InitMino(holdMino.shape.type - 1);
+        holdMino.shape = shapes[type];    
+    }
+    else if (hold_status == 0) {
+        holdMino.shape = shapes[type];
+        *next = InitMino(*next);
+    }
+    
+}
+
+
+void InitializeApp() {
     initscr();
     cbreak();
     noecho();
@@ -189,12 +222,12 @@ void initializeApp() {
     srand((unsigned int)time(NULL));
 }
 
-void keyAction(int key) {
+void KeyAction(int key, int* next) {
     switch (key) {
     case KEY_RIGHT: mino.x++; break;
     case KEY_LEFT: mino.x--; break;
     case KEY_DOWN: mino.y++; break;
-    default: {
+    case KEY_UP: {
         MINO newMino = mino;
         for (int y = 0; y < mino.shape.height; y++) {
             for (int x = 0; x < mino.shape.width; x++) {
@@ -203,11 +236,16 @@ void keyAction(int key) {
         }
         mino = newMino;
     }
+               break;
+    default: {     
+        HoldFlow(next);
+        hold_status = 2;
+    }
            break;
     }
 }
 
-int CompleteAction(int* next, int* score) {
+int CompleteFlow(int* next, int* score) {
     for (int y = 0; y < mino.shape.height; y++) {
         for (int x = 0; x < mino.shape.width; x++) {
             if (mino.shape.pattern[y][x]) {
@@ -240,37 +278,53 @@ int CompleteAction(int* next, int* score) {
             return 1;
         }
     }
+    hold_status = hold_status == 0 ? 0 : 1;
     *next = InitMino(*next);
     return 0;
 }
 
-int gameRun() {
+void DrawExplanation() {
+    mvprintw(13 + Y, 26 + X, "→　：　右移動");
+    mvprintw(14 + Y, 26 + X, "←　：　左移動");
+    mvprintw(15 + Y, 26 + X, "↓　：　下移動");
+    mvprintw(16 + Y, 26 + X, "↑　：　回転");
+    mvprintw(17 + Y, 26 + X, "他　：　保留");
+}
+
+int GameRun() {
     int next = Init();
     int score = 0;
     clock_t lastClock = clock();
     int isFinished = 0;
+    int intervel = 1000;
+    int level = 1;
     while (1) {
         clear();
         DrawScrean();
-        drawField();
+        //DrawField();
+        DrawExplanation();
         clock_t nowClock = clock();
-        if (nowClock - lastClock >= INTERVAL) {
+        if (nowClock - lastClock >= intervel) {
             lastClock = nowClock;
             MINO lastMino = mino;
             mino.y++;
             if (MinoIntercectField()) {
                 mino = lastMino;
-                isFinished = CompleteAction(&next, &score);
+                isFinished = CompleteFlow(&next, &score);
             }
             DrawScrean();
         }
         if (isFinished) break;
-        drawNextMino(next);
-        mvprintw(10, 26, "%d", score);
+        DrawNextMino(next);
+        DrawHoldMino(hold_status);
+        level = score / 500 + 1;
+        intervel = 1000 / level;
+        mvprintw(9 + Y, 26 + X, "score: %d", score);
+        mvprintw(10 + Y, 26 + X, "level: %d", level);
         MINO lastMino = mino;
         if (_kbhit()) {
             int key = getch();
-            keyAction(key);
+            KeyAction(key, &next);
         }
         if (MinoIntercectField()) {
             mino = lastMino;
@@ -279,15 +333,4 @@ int gameRun() {
     }
     endwin();
     return score;
-}
-
-void showEndScrean(int score, char *name) {
-    initscr();
-    cbreak();
-    noecho();
-    printw("\nHello, %s! Your Score is %d", name, score);
-    printw("\nPlease press enter. You can end game ");
-    refresh();
-    getch();
-    endwin();
 }

@@ -1,19 +1,12 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
-#include <conio.h>
 #include <curses.h>
 #include <Windows.h>
+
 #include "fileIO.h"
 #include "ranking.h"
-
-
 
 void uploadFileData(char* fileName, Ranking* datas, Ranking* ranking);
 void loadFileData(char* fileName, Ranking* datas, Ranking* ranking);
 void getFileName(char* fileName);
-
 
 
 void showRanking(int score, char* name) {

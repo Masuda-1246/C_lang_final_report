@@ -42,6 +42,7 @@ void loadFileData(char* fileName, Ranking* datas, Ranking* ranking)
     else {
         for (int i = 0; i < 10; i++) {
             Ranking* new_ranking = new Ranking();
+
             fgets(s, BUFFSIZE, fp);
             char delim[] = ", ";
             char* ctx;
