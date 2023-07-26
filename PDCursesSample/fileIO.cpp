@@ -1,15 +1,10 @@
 #include <windows.h>
-#include <mmsystem.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
 #include <cstring>
-#include <vector>
+
 #pragma comment(lib, "winmm.lib")
 
-#define NUMTHREAD 2
-#define USEMUTEX
-#define BUFFSIZE 1024
 #define CHARBUFF 124
 #define BUFFSIZE 1024
 
@@ -52,10 +47,10 @@ void loadFileData(char* fileName, Ranking* datas, Ranking* ranking)
             char* ctx;
             p1 = strtok_s(s, delim, &ctx);
             new_ranking->score = atoi(p1);
-            p1 = strtok_s(NULL, delim, &ctx); // 2?ڈȍ~?̕?????????擾 
+            p1 = strtok_s(NULL, delim, &ctx);
             size_t len = strlen(p1);
             if (len > 0 && p1[len - 1] == '\n') {
-                p1[len - 1] = '\0'; // 改行コードをヌル文字に置き換える
+                p1[len - 1] = '\0';
             }
             sprintf_s(new_ranking->name, "%s", p1);
             datas[i] = *new_ranking;

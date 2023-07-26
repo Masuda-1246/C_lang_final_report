@@ -27,7 +27,7 @@ void showRanking(int score, char* name) {
     ranking->score = score;
     sprintf_s(ranking->name, "%s", name);
     loadFileData(file_name, datas, ranking);
-    printw("Your score is %d\n", ranking->score);
+    printw("%s's score is %d\n", ranking->name, ranking->score);
     printw("Ranking \n");
     for (int i = 0; i < 10; i++) {
         if (datas[i].score < ranking->score) {
@@ -46,10 +46,3 @@ void showRanking(int score, char* name) {
     getch();
     endwin();
 }
-
-void getRankingData() {
-    char file_name[100];
-    getFileName(file_name);
-
-}
-
