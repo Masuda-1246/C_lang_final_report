@@ -1,0 +1,1 @@
+#pragma onceint gameRun();void initializeApp();void showEndScrean(int score, char* name);
